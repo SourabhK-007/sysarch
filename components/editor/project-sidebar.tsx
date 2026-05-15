@@ -1,16 +1,24 @@
 "use client";
 
-import { X, Plus } from "lucide-react";
+import { X, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useProjectDialogs } from "@/hooks/use-project-dialogs";
 
 interface ProjectSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const MOCK_SHARED_PROJECTS = [
+  { id: "4", name: "Global State Management" },
+  { id: "5", name: "Database Schema V2" },
+];
+
 export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
+  const { openDialog, myProjects } = useProjectDialogs();
+
   return (
     <div
       className={cn(
@@ -32,23 +40,70 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
             <TabsTrigger value="my-projects">My Projects</TabsTrigger>
             <TabsTrigger value="shared">Shared</TabsTrigger>
           </TabsList>
-          <TabsContent value="my-projects" className="mt-4">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-subtle py-8 text-center">
-              <p className="text-sm text-text-muted">No projects yet</p>
-            </div>
+          <TabsContent value="my-projects" className="mt-4 flex flex-col gap-1">
+            {myProjects.length > 0 ? (
+              myProjects.map((project) => (
+                <div
+                  key={project.id}
+                  className="group flex items-center justify-between rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-bg-subtle hover:text-text-primary transition-colors cursor-pointer"
+                >
+                  <span className="truncate pr-2">{project.name}</span>
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <Button 
+                      variant="ghost" 
+                      size="icon-xs" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDialog("rename", { projectId: project.id, projectName: project.name });
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="sr-only">Rename</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon-xs" 
+                      className="text-state-error hover:text-state-error hover:bg-state-error/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDialog("delete", { projectId: project.id, projectName: project.name });
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-subtle py-8 text-center">
+                <p className="text-sm text-text-muted">No projects yet</p>
+              </div>
+            )}
           </TabsContent>
-          <TabsContent value="shared" className="mt-4">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-subtle py-8 text-center">
-              <p className="text-sm text-text-muted">No shared projects</p>
-            </div>
+          <TabsContent value="shared" className="mt-4 flex flex-col gap-1">
+            {MOCK_SHARED_PROJECTS.length > 0 ? (
+              MOCK_SHARED_PROJECTS.map((project) => (
+                <div
+                  key={project.id}
+                  className="flex items-center rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-bg-subtle hover:text-text-primary transition-colors cursor-pointer"
+                >
+                  <span className="truncate">{project.name}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-subtle py-8 text-center">
+                <p className="text-sm text-text-muted">No shared projects</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
 
       <div className="border-t border-border-subtle p-4">
-        <Button className="w-full" variant="default">
+        <Button className="w-full" variant="default" onClick={() => openDialog("create")}>
           <Plus className="mr-2 h-4 w-4" />
-          New Project +
+          New Project
         </Button>
       </div>
     </div>

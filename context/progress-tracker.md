@@ -4,15 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 03: Authentication
+- Feature 04: Project Dialogs (Completed)
 
 ## Current Goal
 
-- Wrap root layout with `ClerkProvider` using Clerk's `dark` theme
-- Create sign-in and sign-up pages (`app/sign-in` and `app/sign-up`) with simple two-panel layout
-- Add `proxy.ts` at the project root for route protection
-- Update `/` to redirect users based on auth status
-- Add `UserButton` to `EditorNavbar`
+- Project Dialogs have been implemented and verified.
 
 ## Completed
 
@@ -38,13 +34,21 @@ Update this file whenever the current phase, active feature, or implementation s
   - Configured home route (`/`) to conditionally redirect to `/editor` or `/sign-in` based on auth status.
   - Verified `npm run build` passes successfully.
 
+- **Feature 04 — Project Dialogs** ✓
+  - Created `ProjectDialogsProvider` and `useProjectDialogs` hook for centralized state management.
+  - Implemented 'Create', 'Rename', and 'Delete' dialogs using shadcn/ui components.
+  - Added real-time URL-safe slug preview to the 'Create' dialog.
+  - Updated `/editor` home view with a minimal layout and 'New Project' action.
+  - Wired mock project data into `ProjectSidebar` with hover actions for renaming and deleting.
+  - Added a mobile backdrop scrim to easily close the sidebar on smaller screens.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Feature 04 (TBD — check feature-specs directory for next spec).
+- Feature 05 (TBD — check feature-specs directory for next spec).
 
 ## Open Questions
 
