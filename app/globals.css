@@ -52,7 +52,7 @@
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
 
-    /* ── Ghost AI project-specific tokens (ui-context.md) ── */
+    /* ── Loom AI project-specific tokens (ui-context.md) ── */
     --color-bg-base: var(--bg-base);
     --color-bg-surface: var(--bg-surface);
     --color-bg-elevated: var(--bg-elevated);
@@ -73,10 +73,10 @@
 }
 
 /*
- * Ghost AI is dark-only. :root holds the dark values directly.
+ * Loom AI is dark-only. :root holds the dark values directly.
  * No light-mode block. No .dark toggle required in the app.
  *
- * shadcn/ui semantic tokens are remapped to the Ghost AI dark palette
+ * shadcn/ui semantic tokens are remapped to the Loom AI dark palette
  * defined in context/ui-context.md.
  */
 :root {
@@ -114,7 +114,7 @@
     --sidebar-border: #2a2a30;
     --sidebar-ring: #00c8d4;
 
-    /* ── Ghost AI project-specific tokens (ui-context.md) ── */
+    /* ── Loom AI project-specific tokens (ui-context.md) ── */
     --bg-base: #080809;
     --bg-surface: #111114;
     --bg-elevated: #18181c;
