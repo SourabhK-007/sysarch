@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Prisma models, singleton client, and database connection have been configured and verified.
+- Implement project APIs for CRUD operations with Clerk authentication.
 
 ## Completed
 
@@ -49,13 +49,21 @@ Update this file whenever the current phase, active feature, or implementation s
   - Generated Prisma Client and ran `init_project_models` migration.
   - Verified `npm run build` passes successfully.
 
+- **Feature 06 — Project APIs** ✓
+  - Implemented `GET /api/projects` to list current user's projects.
+  - Implemented `POST /api/projects` to create new projects with default names.
+  - Implemented `PATCH /api/projects/[projectId]` to rename projects, with owner checks.
+  - Implemented `DELETE /api/projects/[projectId]` to delete projects, with owner checks.
+  - Handled 401 and 403 authorization correctly using Clerk.
+  - Verified `npm run build` passes successfully.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Feature 06 (TBD — check feature-specs directory for next spec).
+- Feature 07 (TBD — check feature-specs directory for next spec).
 
 ## Open Questions
 

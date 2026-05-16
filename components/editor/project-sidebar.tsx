@@ -1,29 +1,32 @@
-"use client";
+'use client';
 
-import { X, Plus, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { useProjectDialogs } from "@/hooks/use-project-dialogs";
+import { X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import type { ProjectSummary } from '@/hooks/use-project-actions';
+import type { useProjectActions } from '@/hooks/use-project-actions';
 
 interface ProjectSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  ownedProjects: ProjectSummary[];
+  sharedProjects: ProjectSummary[];
+  actions: ReturnType<typeof useProjectActions>;
 }
 
-const MOCK_SHARED_PROJECTS = [
-  { id: "4", name: "Global State Management" },
-  { id: "5", name: "Database Schema V2" },
-];
-
-export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
-  const { openDialog, myProjects } = useProjectDialogs();
-
+export function ProjectSidebar({
+  isOpen,
+  onClose,
+  ownedProjects,
+  sharedProjects,
+  actions,
+}: ProjectSidebarProps) {
   return (
     <div
       className={cn(
-        "fixed top-14 left-0 z-40 h-[calc(100vh-3.5rem)] w-64 -translate-x-full border-r border-border-subtle bg-bg-surface/95 backdrop-blur-md transition-transform duration-300 ease-in-out shadow-2xl flex flex-col",
-        isOpen && "translate-x-0"
+        'fixed top-14 left-0 z-40 h-[calc(100vh-3.5rem)] w-64 -translate-x-full border-r border-border-subtle bg-bg-surface/95 backdrop-blur-md transition-transform duration-300 ease-in-out shadow-2xl flex flex-col',
+        isOpen && 'translate-x-0'
       )}
     >
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
@@ -40,33 +43,34 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
             <TabsTrigger value="my-projects">My Projects</TabsTrigger>
             <TabsTrigger value="shared">Shared</TabsTrigger>
           </TabsList>
+
           <TabsContent value="my-projects" className="mt-4 flex flex-col gap-1">
-            {myProjects.length > 0 ? (
-              myProjects.map((project) => (
+            {ownedProjects.length > 0 ? (
+              ownedProjects.map((project) => (
                 <div
                   key={project.id}
                   className="group flex items-center justify-between rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-bg-subtle hover:text-text-primary transition-colors cursor-pointer"
                 >
                   <span className="truncate pr-2">{project.name}</span>
                   <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button 
-                      variant="ghost" 
-                      size="icon-xs" 
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openDialog("rename", { projectId: project.id, projectName: project.name });
+                        actions.openRename(project);
                       }}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                       <span className="sr-only">Rename</span>
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon-xs" 
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       className="text-state-error hover:text-state-error hover:bg-state-error/10"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openDialog("delete", { projectId: project.id, projectName: project.name });
+                        actions.openDelete(project);
                       }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -81,9 +85,10 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
               </div>
             )}
           </TabsContent>
+
           <TabsContent value="shared" className="mt-4 flex flex-col gap-1">
-            {MOCK_SHARED_PROJECTS.length > 0 ? (
-              MOCK_SHARED_PROJECTS.map((project) => (
+            {sharedProjects.length > 0 ? (
+              sharedProjects.map((project) => (
                 <div
                   key={project.id}
                   className="flex items-center rounded-md px-3 py-2 text-sm text-text-secondary hover:bg-bg-subtle hover:text-text-primary transition-colors cursor-pointer"
@@ -101,7 +106,7 @@ export function ProjectSidebar({ isOpen, onClose }: ProjectSidebarProps) {
       </div>
 
       <div className="border-t border-border-subtle p-4">
-        <Button className="w-full" variant="default" onClick={() => openDialog("create")}>
+        <Button className="w-full" variant="default" onClick={actions.openCreate}>
           <Plus className="mr-2 h-4 w-4" />
           New Project
         </Button>
