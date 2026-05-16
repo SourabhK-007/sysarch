@@ -19,7 +19,7 @@ const createPrismaClient = () => {
     // It's safer to use pg's Pool directly with PrismaPg as per Prisma adapter docs
     const pool = new Pool({ connectionString })
     const adapter = new PrismaPg(pool)
-    return new PrismaClient({ adapter })
+    return new PrismaClient({ adapter }).$extends(withAccelerate())
   }
 }
 
