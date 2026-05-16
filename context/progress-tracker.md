@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 04: Project Dialogs (Completed)
+- Feature 05: Prisma Setup (Completed)
 
 ## Current Goal
 
-- Project Dialogs have been implemented and verified.
+- Prisma models, singleton client, and database connection have been configured and verified.
 
 ## Completed
 
@@ -42,13 +42,20 @@ Update this file whenever the current phase, active feature, or implementation s
   - Wired mock project data into `ProjectSidebar` with hover actions for renaming and deleting.
   - Added a mobile backdrop scrim to easily close the sidebar on smaller screens.
 
+- **Feature 05 — Prisma Setup** ✓
+  - Created `prisma/models/project.prisma` with `Project` and `ProjectCollaborator` models.
+  - Implemented `lib/prisma.ts` as a cached singleton with Accelerate extension and `@prisma/adapter-pg` fallback.
+  - Updated `prisma.config.ts` to load `.env.local` to securely pull `DATABASE_URL`.
+  - Generated Prisma Client and ran `init_project_models` migration.
+  - Verified `npm run build` passes successfully.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Feature 05 (TBD — check feature-specs directory for next spec).
+- Feature 06 (TBD — check feature-specs directory for next spec).
 
 ## Open Questions
 
