@@ -37,11 +37,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: CreateProjectBody = {};
+  let body: CreateProjectBody;
   try {
     body = await req.json();
   } catch {
-    // no-op: body is optional, defaults apply below
+    return NextResponse.json({ error: 'Malformed JSON' }, { status: 400 });
   }
 
   const name = typeof body.name === 'string' && body.name.trim()
