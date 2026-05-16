@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Goal
 
-- Implement project APIs for CRUD operations with Clerk authentication.
+- Implement sharing system with collaborator management and Clerk profile enrichment.
 
 ## Completed
 
@@ -57,13 +57,34 @@ Update this file whenever the current phase, active feature, or implementation s
   - Handled 401 and 403 authorization correctly using Clerk.
   - Verified `npm run build` passes successfully.
 
+- **Feature 07 — Wire Editor Home** ✓
+  - Fetched owned and shared projects server-side in `app/editor/layout.tsx`.
+  - Created `useProjectActions` hook for project mutations (create, rename, delete).
+  - Wired real project data into `ProjectSidebar` and connected dialogs.
+  - Verified navigation to workspace on creation and redirect/refresh on delete/rename.
+
+- **Feature 08 — Editor Workspace Shell** ✓
+  - Implemented `lib/project-access.ts` for server-side identity and access checks.
+  - Created `AccessDenied` component for unauthorized project access.
+  - Updated `EditorLayout`, `EditorNavbar`, and `ProjectSidebar` to support workspace context and active project highlighting.
+  - Implemented `/editor/[roomId]` server component with access validation and canvas placeholder.
+  - Verified `npm run build` passes successfully.
+
+- **Feature 09 — Share Dialog** ✓
+  - Implemented API routes for collaborator listing, invitation, and removal with ownership checks.
+  - Integrated Clerk Backend API for user profile enrichment (names/avatars).
+  - Created `ShareDialog` component with invitation logic and collaborator list.
+  - Wired "Share" button in `EditorNavbar` and updated `EditorLayout` for ownership context.
+  - Verified `npm run build` passes successfully.
+
 ## In Progress
 
 - None.
 
+
 ## Next Up
 
-- Feature 07 (TBD — check feature-specs directory for next spec).
+- Feature 10 (TBD).
 
 ## Open Questions
 

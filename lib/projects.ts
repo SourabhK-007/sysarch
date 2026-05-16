@@ -34,11 +34,31 @@ export async function getSharedProjects(): Promise<ProjectRow[]> {
   const { userId } = await auth();
   if (!userId) return [];
 
-  // Shared projects: user is a collaborator but not the owner.
-  // We look up by the Clerk user's email stored on ProjectCollaborator.
-  // Since we only store email on collaborators (not userId), we can't
-  // join on userId directly here — return empty until email is available via Clerk.
-  // This is intentionally left as an empty set for now; the spec says
-  // "fetch owned and shared projects server-side" without defining the email lookup yet.
-  return [];
+  // 1. Get user's email from Clerk
+  const { currentUser } = await import('@clerk/nextjs/server');
+  const user = await currentUser();
+  const email = user?.emailAddresses[0]?.emailAddress;
+
+  if (!email) return [];
+
+  // 2. Fetch projects where user is a collaborator but not the owner
+  return prisma.project.findMany({
+    where: {
+      ownerId: { not: userId },
+      collaborators: {
+        some: {
+          email: email.toLowerCase(),
+        },
+      },
+    },
+    orderBy: { updatedAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      ownerId: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 }

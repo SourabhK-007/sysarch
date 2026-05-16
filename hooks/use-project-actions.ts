@@ -145,6 +145,21 @@ export function useProjectActions() {
     }
   }, [deleteTarget, closeDelete, router]);
 
+    // Share dialog state
+    const [isShareOpen, setIsShareOpen] = useState(false);
+    const [shareProjectId, setShareProjectId] = useState<string | null>(null);
+
+    // --- Share ---
+    const openShare = useCallback((projectId: string) => {
+      setShareProjectId(projectId);
+      setIsShareOpen(true);
+    }, []);
+
+    const closeShare = useCallback(() => {
+      setIsShareOpen(false);
+      setShareProjectId(null);
+    }, []);
+
   return {
     // Create
     isCreateOpen,
@@ -171,5 +186,12 @@ export function useProjectActions() {
     openDelete,
     closeDelete,
     submitDelete,
+
+    // Share
+    isShareOpen,
+    shareProjectId,
+    openShare,
+    closeShare,
   };
 }
+

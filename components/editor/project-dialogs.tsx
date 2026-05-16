@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ShareDialog } from '@/components/editor/share-dialog';
 import type { useProjectActions } from '@/hooks/use-project-actions';
 
 interface ProjectDialogsProps {
   actions: ReturnType<typeof useProjectActions>;
+  isOwner?: boolean;
 }
 
-export function ProjectDialogs({ actions }: ProjectDialogsProps) {
+export function ProjectDialogs({ actions, isOwner = false }: ProjectDialogsProps) {
   const {
     // Create
     isCreateOpen, createName, setCreateName, roomId, isCreating, closeCreate, submitCreate,
@@ -17,10 +19,18 @@ export function ProjectDialogs({ actions }: ProjectDialogsProps) {
     renameTarget, renameName, setRenameName, isRenaming, closeRename, submitRename,
     // Delete
     deleteTarget, isDeleting, closeDelete, submitDelete,
+    // Share
+    isShareOpen, shareProjectId, closeShare,
   } = actions;
 
   return (
     <>
+      <ShareDialog 
+        isOpen={isShareOpen}
+        onClose={closeShare}
+        projectId={shareProjectId}
+        isOwner={isOwner}
+      />
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && closeCreate()}>
         <DialogContent>
