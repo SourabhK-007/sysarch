@@ -51,7 +51,7 @@ export function EditorLayout({
   }, [activeProjectId, ownedProjects]);
 
   return (
-    <EditorActionsContext.Provider value={{ openCreate: actions.openCreate }}>
+    <EditorActionsContext.Provider value={{ openCreate: actions.openCreate, isSidebarOpen }}>
       <div className="flex h-screen w-full flex-col overflow-hidden bg-bg-base text-text-primary">
         <EditorNavbar
           isSidebarOpen={isSidebarOpen}
