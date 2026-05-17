@@ -10,7 +10,21 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
-    await auth.protect();
+    // For API routes, return a clean JSON 401 instead of a page redirect
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      const session = await auth();
+      if (!session.userId) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+    } else {
+      await auth.protect();
+    }
   }
 });
 

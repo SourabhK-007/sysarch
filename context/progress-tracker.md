@@ -4,13 +4,20 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 10: Liveblocks Setup (Completed)
+- Feature 18: Starter Templates (Completed)
 
 ## Current Goal
 
-- Implement real-time collaborative canvas with React Flow.
+- Finalize collaborative real-time canvas UX and controls.
 
 ## Completed
+
+- **Feature 18 — Starter Templates** ✓
+  - Created `CanvasTemplate` interface and static `CANVAS_TEMPLATES` array in `components/editor/starter-templates.ts` supporting standard colors and shapes.
+  - Implemented `components/editor/starter-templates-modal.tsx` with dynamic, auto-scaling lightweight SVG visual previews of architectures (Microservices, Event-Driven, CI/CD Pipeline).
+  - Added "Templates" action button in `components/editor/editor-navbar.tsx` visible when a room workspace is active.
+  - Wired CustomEvent-based modal triggering and import behavior inside `components/editor/collaborative-canvas.tsx`, completely replacing previous canvas content on import and correctly centering elements via `fitView()`.
+  - Passed production build checks (`npm run build`) successfully with zero type errors.
 
 - **Feature 01 — Design System** ✓
   - shadcn/ui initialized with Nova preset (Lucide + Geist), Tailwind v4 detected automatically.
@@ -97,13 +104,60 @@ Update this file whenever the current phase, active feature, or implementation s
   - Integrated `onDragOver` and `onDrop` event handlers inside `<ReactFlowProvider>` using React Flow's `screenToFlowPosition` and `setNodes` to programmatically insert nodes.
   - Verified a successful production build with Turbopack and TypeScript compiles.
 
+- **Feature 13 — Node Shapes and Drag Previews** ✓
+  - Implemented reusable `<ShapeRenderer>` rendering standard shapes (`rectangle`, `pill`, `circle`) using CSS styling.
+  - Implemented SVG rendering for complex shapes (`diamond`, `hexagon`, `cylinder`) that scale smoothly with the node's dimensions.
+  - Handled non-scaling borders using `vector-effect="non-scaling-stroke"` to keep borders razor-sharp regardless of node size.
+  - Bound selected state to dynamic theme highlights using node-specific contrast color pairings (`NODE_COLORS`).
+  - Created native custom ghost drag previews in `<ShapePanel>` by utilizing an off-screen `<ShapeRenderer>` bundle and `event.dataTransfer.setDragImage`.
+  - Verified a successful production build with Turbopack and TypeScript compiles.
+
+- **Feature 14 — Canvas Node Resizing & Inline Label Editing** ✓
+  - Integrated React Flow `<NodeResizer>` controls shown only on selected nodes.
+  - Set strict minimum width/height limits to prevent shapes from being resized to zero/invisible bounds.
+  - Custom styled resize handles to match Loom AI's premium dark-theme branding (subtle offscreen elements that turn glowing cyan on hover).
+  - Designed double-click inline label editing vertically and horizontally centered in all CSS and SVG shapes.
+  - Added `nodrag` and `nopan` class overrides to the textarea, ensuring text editing does not trigger canvas drag or pan actions.
+  - Used `useReactFlow()` to mutate node data, syncing label edits in real-time across collaborators using the existing Liveblocks room flow.
+  - Added auto-focus and auto-selection of text when launching editor mode.
+  - Verified a successful production build with Turbopack and TypeScript compiles.
+
+- **Feature 15 — Canvas Node Color Toolbar** ✓
+  - Added floating color toolbar centered above selected canvas nodes (`absolute -top-12 left-1/2 -translate-x-1/2`).
+  - Handled 8 high-contrast color swatches from the `NODE_COLORS` palette in `types/canvas.ts`.
+  - Added active status styling (matching color border and center inset dot) and hover animation (controlled tight glow based on the swatch text color).
+  - Fully bypassed event bubbling for toolbar interactions (clicks, mouse downs, and pointer downs) using `nodrag nopan` and `e.stopPropagation()`.
+  - Integrated with collaborative canvas state via React Flow's `setNodes` hook, updating node fill/text colors seamlessly across collaborators in real time.
+  - Verified compile checks pass perfectly without warnings or type errors.
+
+- **Feature 16 — Custom Edge Behavior & Inline Label Editing** ✓
+  - Configured four-sided connection handles (`top`, `right`, `bottom`, `left`) on all nodes with subtle styling (small white dots with dark border, faded in on hover).
+  - Created a custom edge renderer `CustomCanvasEdgeRenderer` registered as type `canvasEdge` and configured it as the default edge type inside React Flow.
+  - Implemented clean right-angle routing with rounded corners using React Flow's `getSmoothStepPath` (`borderRadius: 8`).
+  - Added visual highlight states (dimmed at rest, brightened to text-primary when hovered or selected).
+  - Engineered dual-path SVG structure (invisible thick helper `strokeWidth={15}` for hover + thin visible stroke) making edges incredibly easy to click and hover.
+  - Built interactive inline edge label editing: double-clicking the edge path or the badge launches a growing HTML input centered at the path's midpoint using `EdgeLabelRenderer`.
+  - Added click and input event isolation (`nodrag nopan` plus `e.stopPropagation()`) preventing canvas drag or pan actions.
+  - Handled blur, Enter, or Escape key events to save or discard label edits, updating edges collaboratively in real-time.
+  - Rendered saved labels as small pill badges and added a faint dashed hint badge (`Double-click to label`) for active unlabeled edges.
+  - Verified a successful production compile with zero TypeScript errors.
+
+- **Feature 17 — Canvas Ergonomics** ✓
+  - Added a floating pill-shaped control bar at the bottom-left of the canvas.
+  - Wired React Flow zoom controls with smooth animations.
+  - Wired Liveblocks undo and redo handlers with dynamic visual states (dimmed/disabled) when the history stack is empty.
+  - Created a custom `useKeyboardShortcuts` hook to process keyboard shortcuts: `=` / `+` (Zoom In), `-` (Zoom Out), `Cmd/Ctrl + Z` (Undo), `Cmd/Ctrl + Shift + Z` (Redo), and `Cmd/Ctrl + Y` (Redo).
+  - Isolated keyboard shortcut processing so standard keys are ignored while active focus is on input fields, textareas, or content-editable text areas.
+  - Removed the default React Flow `<MiniMap>`.
+  - Passed all TypeScript compile and build checks.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Feature 13 — Custom Node & Edge Styling and Controls.
+- None.
 
 ## Open Questions
 

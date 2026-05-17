@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelLeftClose, PanelLeftOpen, Share2, MessageSquareText } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Share2, MessageSquareText, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,17 @@ export function EditorNavbar({
       <div className="flex items-center gap-2">
         {showWorkspaceActions && (
           <>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 gap-2 text-text-secondary hidden md:flex"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-starter-templates'));
+              }}
+            >
+              <LayoutTemplate className="h-4 w-4" />
+              <span>Templates</span>
+            </Button>
             {isOwner && (
               <Button 
                 variant="ghost" 
