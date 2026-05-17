@@ -563,7 +563,7 @@ const edgeTypes = {
 
 // ── Draggable Shape Panel ──
 interface ShapeItem {
-  shape: string;
+  shape: NodeShape;
   label: string;
   icon: React.ComponentType<any>;
   width: number;
@@ -580,7 +580,7 @@ const SHAPES: ShapeItem[] = [
 ];
 
 function ShapePanel() {
-  const onDragStart = (event: React.DragEvent, shape: string, width: number, height: number) => {
+  const onDragStart = (event: React.DragEvent, shape: NodeShape, width: number, height: number) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify({ shape, width, height }));
     event.dataTransfer.effectAllowed = 'move';
 
@@ -602,7 +602,7 @@ function ShapePanel() {
             className="opacity-70 bg-transparent select-none pointer-events-none"
           >
             <ShapeRenderer
-              shape={item.shape as any}
+              shape={item.shape}
               color="#1F1F1F"
               isSelected={false}
               label=""

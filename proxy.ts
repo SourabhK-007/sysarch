@@ -10,8 +10,14 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
-    // For API routes, return a clean JSON 401 instead of a page redirect
-    if (request.nextUrl.pathname.startsWith('/api/')) {
+    // For API and programmatic routes, return a clean JSON 401 instead of a page redirect
+    const pathname = request.nextUrl.pathname;
+    if (
+      pathname === '/api' ||
+      pathname.startsWith('/api/') ||
+      pathname === '/trpc' ||
+      pathname.startsWith('/trpc/')
+    ) {
       const session = await auth();
       if (!session.userId) {
         return new Response(
