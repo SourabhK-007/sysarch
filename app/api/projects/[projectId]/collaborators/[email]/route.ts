@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/lib/generated/prisma/client';
 
 /**
  * DELETE /api/projects/[projectId]/collaborators/[email]
@@ -16,7 +17,13 @@ export async function DELETE(
   }
 
   const { projectId, email } = await params;
-  const decodedEmail = decodeURIComponent(email);
+  
+  let decodedEmail: string;
+  try {
+    decodedEmail = decodeURIComponent(email);
+  } catch {
+    return NextResponse.json({ error: 'Invalid email encoding' }, { status: 400 });
+  }
 
   try {
     // 1. Verify project ownership
@@ -44,6 +51,9 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Collaborator removed' });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return NextResponse.json({ error: 'Collaborator not found' }, { status: 404 });
+    }
     console.error('[API_COLLABORATORS_DELETE]', error);
     return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }

@@ -30,10 +30,14 @@ export async function PATCH(
   const name = body.name.trim();
   const { projectId } = await params;
 
+  console.log('[PROJECT_PATCH] Triggered:', { projectId, userId, name });
+
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
+
+    console.log('[PROJECT_PATCH] Found project:', project);
 
     if (!project) {
       return NextResponse.json({ error: 'Not Found' }, { status: 404 });
@@ -67,10 +71,14 @@ export async function DELETE(
 
   const { projectId } = await params;
 
+  console.log('[PROJECT_DELETE] Triggered:', { projectId, userId });
+
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
     });
+
+    console.log('[PROJECT_DELETE] Found project:', project);
 
     if (!project) {
       return NextResponse.json({ error: 'Not Found' }, { status: 404 });

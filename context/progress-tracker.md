@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 05: Prisma Setup (Completed)
+- Feature 10: Liveblocks Setup (Completed)
 
 ## Current Goal
 
-- Implement sharing system with collaborator management and Clerk profile enrichment.
+- Implement real-time collaborative canvas with React Flow.
 
 ## Completed
 
@@ -38,7 +38,7 @@ Update this file whenever the current phase, active feature, or implementation s
   - Created `ProjectDialogsProvider` and `useProjectDialogs` hook for centralized state management.
   - Implemented 'Create', 'Rename', and 'Delete' dialogs using shadcn/ui components.
   - Added real-time URL-safe slug preview to the 'Create' dialog.
-  - Updated `/editor` home view with a minimal layout and 'New Project' action.
+  - Updated `/editor home view with a minimal layout and 'New Project' action.
   - Wired mock project data into `ProjectSidebar` with hover actions for renaming and deleting.
   - Added a mobile backdrop scrim to easily close the sidebar on smaller screens.
 
@@ -77,14 +77,33 @@ Update this file whenever the current phase, active feature, or implementation s
   - Wired "Share" button in `EditorNavbar` and updated `EditorLayout` for ownership context.
   - Verified `npm run build` passes successfully.
 
+- **Feature 10 — Liveblocks Setup** ✓
+  - Updated `liveblocks.config.ts` with typed Presence and UserMeta.
+  - Implemented cached Liveblocks node client in `lib/liveblocks.ts` with a deterministic color helper.
+  - Created `POST /api/liveblocks-auth` route for secure room access with project verification.
+  - Verified `npm run build` passes successfully.
+
+- **Feature 11 — Real-time Collaborative Canvas** ✓
+  - Created `types/canvas.ts` containing `canvasNode`, `canvasEdge`, `NODE_COLORS`, and `NODE_SHAPES`.
+  - Built client component `CollaborativeCanvasWrapper` with `CanvasErrorBoundary`, `LiveblocksProvider`, `RoomProvider`, `ClientSideSuspense`, and a premium CSS loader fallback.
+  - Built `CollaborativeCanvas` inner component leveraging `@xyflow/react` (v12) and `@liveblocks/react-flow` with `ConnectionMode.Loose`, custom thin edge line aesthetics, dot-pattern background, and a beautifully dark-styled `MiniMap`.
+  - Replaced the placeholder in the server component `app/editor/[roomId]/page.tsx` with `<CollaborativeCanvasWrapper roomId={roomId} />`, preserving server-side access validation.
+  - Verified a successful production build with Turbopack and TypeScript compiles.
+
+- **Feature 12 — Shape Panel (Drag and Drop)** ✓
+  - Created floating pill-shaped `<ShapePanel>` toolbar at the bottom-center of the canvas.
+  - Provided draggable buttons for Rectangle, Decision, Event, Service, Database, and External shapes using Lucide icons.
+  - Implemented client-side `CustomCanvasNodeRenderer` rendering nodes as styled boxes with top, right, bottom, and left handles revealed on hover.
+  - Integrated `onDragOver` and `onDrop` event handlers inside `<ReactFlowProvider>` using React Flow's `screenToFlowPosition` and `setNodes` to programmatically insert nodes.
+  - Verified a successful production build with Turbopack and TypeScript compiles.
+
 ## In Progress
 
 - None.
 
-
 ## Next Up
 
-- Feature 10 (TBD).
+- Feature 13 — Custom Node & Edge Styling and Controls.
 
 ## Open Questions
 
