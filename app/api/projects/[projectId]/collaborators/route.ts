@@ -38,10 +38,10 @@ export async function GET(
     // To check collaborator status, we need the user's email.
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const userEmailNormalized = user.emailAddresses[0]?.emailAddress?.trim().toLowerCase();
 
     const isOwner = project.ownerId === userId;
-    const isCollaborator = project.collaborators.some(c => c.email === userEmail);
+    const isCollaborator = project.collaborators.some(c => (c.email ?? "").trim().toLowerCase() === userEmailNormalized);
 
     if (!isOwner && !isCollaborator) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -105,13 +105,14 @@ export async function POST(
   }
 
   const { projectId } = await params;
-  const { email } = await req.json();
-
-  if (!email || !email.includes('@')) {
-    return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
-  }
 
   try {
+    const { email } = await req.json();
+
+    if (!email || !email.includes('@')) {
+      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+    }
+
     // 1. Verify project ownership
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -128,7 +129,10 @@ export async function POST(
     // 2. Prevent inviting the owner
     const client = await clerkClient();
     const owner = await client.users.getUser(userId);
-    if (owner.emailAddresses.some(e => e.emailAddress === email)) {
+    const userEmailNormalized = owner.emailAddresses[0]?.emailAddress?.trim().toLowerCase();
+    const candidateEmailNormalized = (email ?? "").trim().toLowerCase();
+
+    if (candidateEmailNormalized === userEmailNormalized) {
       return NextResponse.json({ error: 'Cannot invite yourself' }, { status: 400 });
     }
 
@@ -141,8 +145,8 @@ export async function POST(
     });
 
     return NextResponse.json({ data: collaborator });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+ } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
       return NextResponse.json({ error: 'User already invited' }, { status: 400 });
     }
     console.error('[API_COLLABORATORS_POST]', error);

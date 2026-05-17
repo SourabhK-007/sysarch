@@ -228,7 +228,7 @@ export function ShareDialog({
                               <Button
                                 variant="ghost"
                                 size="icon-sm"
-                                className="opacity-0 group-hover:opacity-100 text-state-error hover:text-state-error hover:bg-state-error/10 shrink-0 h-8 w-8"
+                                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-state-error hover:text-state-error hover:bg-state-error/10 focus-visible:bg-state-error/10 shrink-0 h-8 w-8 outline-none"
                                 onClick={() => onRemove(collab.email)}
                               >
                                 <Trash2 className="h-4 w-4" />
