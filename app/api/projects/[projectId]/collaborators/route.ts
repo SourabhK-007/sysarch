@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/lib/generated/prisma/client';
 
 /**
  * GET /api/projects/[projectId]/collaborators
@@ -145,8 +146,8 @@ export async function POST(
     });
 
     return NextResponse.json({ data: collaborator });
- } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'User already invited' }, { status: 400 });
     }
     console.error('[API_COLLABORATORS_POST]', error);

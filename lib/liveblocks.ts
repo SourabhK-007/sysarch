@@ -2,11 +2,15 @@ import { Liveblocks } from '@liveblocks/node';
 
 const secret = process.env.LIVEBLOCKS_SECRET_KEY;
 
+if (!secret) {
+  throw new Error('LIVEBLOCKS_SECRET_KEY is required');
+}
+
 /**
  * Cached Liveblocks node client
  */
 export const liveblocks = new Liveblocks({
-  secret: secret || 'sk_dummy_key_for_build',
+  secret,
 });
 
 /**
