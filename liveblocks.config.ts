@@ -5,7 +5,7 @@ declare global {
     // Each user's Presence, for useMyPresence, useOthers, etc.
     Presence: {
       cursor: { x: number; y: number } | null;
-      isThinking: boolean;
+      thinking: boolean;
     };
 
     // The Storage tree for the room, for useMutation, useStorage, etc.
@@ -25,7 +25,18 @@ declare global {
     };
 
     // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: {};
+    // `ai-status-feed` is the shared AI activity broadcast channel for this room.
+    RoomEvent:
+      | { feed: "ai-status-feed"; active: boolean; text?: string }
+      | {
+          feed: "ai-chat";
+          id: string;
+          sender: { name: string; avatar?: string; color?: string };
+          role: "user" | "assistant";
+          content: string;
+          timestamp: string;
+        }
+      | { feed: "none" };
 
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {

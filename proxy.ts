@@ -8,7 +8,7 @@ const isPublicRoute = createRouteMatcher([
   `${signUpUrl}(.*)`,
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+export const proxy = clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
     // For API and programmatic routes, return a clean JSON 401 instead of a page redirect
     const pathname = request.nextUrl.pathname;
@@ -33,6 +33,8 @@ export default clerkMiddleware(async (auth, request) => {
     }
   }
 });
+
+export default proxy;
 
 export const config = {
   matcher: [

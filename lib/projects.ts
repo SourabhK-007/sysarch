@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import type { Project } from '@/lib/generated/prisma/client';
 
@@ -34,10 +34,17 @@ export async function getSharedProjects(): Promise<ProjectRow[]> {
   const { userId } = await auth();
   if (!userId) return [];
 
-  // 1. Get user's email from Clerk
-  const { currentUser } = await import('@clerk/nextjs/server');
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
+  // currentUser() makes an HTTP call to Clerk's backend API.
+  // If the Clerk API is temporarily unreachable, return an empty list
+  // rather than crashing the layout.
+  let email: string | undefined;
+  try {
+    const user = await currentUser();
+    email = user?.emailAddresses[0]?.emailAddress;
+  } catch (err) {
+    console.warn('[getSharedProjects] currentUser() failed — skipping shared projects:', err);
+    return [];
+  }
 
   if (!email) return [];
 

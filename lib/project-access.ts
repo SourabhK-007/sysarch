@@ -5,8 +5,16 @@ export async function getClerkIdentity() {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
+  // currentUser() makes an HTTP call to Clerk's backend API.
+  // Guard against transient network failures so owner-only access
+  // (which only needs userId from the JWT) is never blocked.
+  let email: string | undefined;
+  try {
+    const user = await currentUser();
+    email = user?.emailAddresses[0]?.emailAddress;
+  } catch (err) {
+    console.warn('[getClerkIdentity] currentUser() failed — collaborator email unavailable:', err);
+  }
 
   return { userId, email };
 }
