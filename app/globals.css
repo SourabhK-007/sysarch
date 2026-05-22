@@ -145,3 +145,34 @@
         @apply font-sans;
     }
 }
+
+/* Custom React Flow Selection Box (Rubber Band/Marquee Selection) */
+.react-flow__selection {
+  background: rgba(0, 200, 212, 0.08) !important;
+  border: 1px dashed var(--accent-primary) !important;
+  box-shadow: 0 0 8px rgba(0, 200, 212, 0.15) !important;
+  border-radius: 4px;
+}
+
+/* Edge reconnection anchors — hidden entirely for a clean canvas */
+.react-flow__edgeupdater {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ── Canvas Connection Handles ──────────────────────────────────────────────
+ * All React Flow handles are invisible hit-targets only — no dot, no glow.
+ * The crosshair cursor is the only visual affordance for connectivity.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.react-flow__handle,
+.react-flow__handle.canvas-handle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  width: 10px !important;
+  height: 10px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}

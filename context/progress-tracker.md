@@ -4,13 +4,117 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Feature 18: Starter Templates (Completed)
+- All core features completed successfully! ✓
 
 ## Current Goal
 
-- Finalize collaborative real-time canvas UX and controls.
+- Fully validated, compiled, and integrated the entire design workspace and system specification engine.
+
 
 ## Completed
+
+- **Product Rebranding: Ghost AI to Loom AI** ✓
+  - Successfully replaced all occurrences of the legacy "Ghost AI" product name with "Loom AI" across all application codebases and files.
+  - Rebranded the interactive workspace sidebar interface UI labels, placeholders, and status text messages.
+  - Updated LLM background tasks (both design agent and technical spec generator) system prompts and streaming progress status updates to refer to the agent as "Loom AI".
+  - Updated related context documents and feature specifications to keep documentation in sync.
+
+- **Feature 29 — Spec UI Integration** ✓
+  - Designed and built a compact specifications list inside the `<AISidebar />` Specs tab dynamically loaded from `ProjectSpec` API.
+  - Resolved JSX syntax root violations by wrapping sibling output elements in a standard React Fragment.
+  - Implemented high-fidelity premium dynamic `<Dialog />` previews showcasing loaded markdown inside a scrollable layout with loaders.
+  - Overrode dialog width via inline styles (`maxWidth: '896px', width: 'calc(100vw - 3rem)'`) to resolve Tailwind v4 custom class conflicts and expand viewport properly on larger screens.
+  - Removed browser-native scrollbars from the `<ScrollArea>` layout, enabling a clean, custom-scrolled HSL dark scrollbar handle.
+  - Scaled technical typography sizes across headers (`h1`/`h2`/`h3`), paragraphs (`p`), list elements (`li`), data tables, and inline code blocks inside `<MarkdownPreview />` to look gorgeous and publication-grade.
+  - Integrated inline download shortcuts on both list cards and modal footers utilizing raw file stream APIs with premium brand-purple transitions and scale micro-animations.
+  - Verified a successful production compile with zero compilation warnings or TypeScript errors.
+
+
+- **Feature 27 & 28 — Spec Generation Flow, Persistence and Download** ✓
+  - Designed and created the `ProjectSpec` PostgreSQL model linked to the `Project` model.
+  - Successfully synced database schemas with `npx prisma db push` and regenerated the Prisma Client.
+  - Implemented the Trigger.dev `specGeneratorTask` background task that fetches Liveblocks room coordinates, feeds progress statuses, runs Gemini (`gemini-2.5-flash`) spec drafting, saves output to Vercel Blob with secure private parameters, and persists metadata in SQL.
+  - Developed a full suite of backend route handlers: spec triggering (`POST /api/ai/spec`), public task-run token issuance (`POST /api/ai/spec/token`), project specs listing (`GET /api/projects/[projectId]/specs`), preview content fetching (`GET /api/projects/[projectId]/specs/[specId]`), and stream-download attachment routing (`GET /api/projects/[projectId]/specs/[specId]/download`).
+  - Styled a premium responsive UI specs panel inside `<AISidebar />` supporting click triggering, custom Markdown rendering with header decoration and dynamic interactive tables, a multi-version dropdown history selector, and instant browser-driven downloads.
+  - Integrated full Trigger.dev `useRealtimeRun` status trackers for live feedback.
+
+- **Feature 26 — Design Agent Frontend** ✓
+  - Passed `projectId` to the `<AISidebar />` client component inside `components/editor/editor-layout.tsx` to provide active workspace room context.
+  - Integrated Trigger.dev `useRealtimeRun` inside `<AISidebar />` to monitor the task run in real time.
+  - Resolved `Missing accessToken in TriggerAuthContext` runtime crash by passing `enabled: !!runId && !!accessToken` to the hook options, disabling client polling until task credentials are ready.
+  - Made the chat box fully scrollable by enforcing height boundaries on nested flex elements in the sidebar layout (`Tabs`, `TabsContent`, and `ScrollArea`) using `min-h-0` classes, and enhanced the auto-scroll viewport query selector to find both Radix and Shadcn viewport slots.
+  - Wired up prompt submission (`POST /api/ai/design`) and run-token generation (`POST /api/ai/design/token`) to authenticate and trigger real-time updates securely.
+  - Implemented a unified `isPending` state that locks the textarea, send button, and starter chip prompts immediately during active AI runs to avoid race conditions.
+  - Bound the real-time tracking states to reset on terminal run states (`COMPLETED`, `FAILED`, `CANCELED`).
+
+- **Feature 25 — Sidebar Chat Feed** ✓
+  - Established a real-time room-scoped collaborative chat feed named `ai-chat` using Liveblocks `RoomEvent`.
+  - Added full Zod-backed payload validation schemas and runtime parsing utilities in `types/tasks.ts`.
+  - Overhauled the `<AISidebar />` component to subscribe to live room chat events, bind user info via `useSelf()`, broadcast sent messages, and clear chat input instantly.
+  - Styled a premium responsive UI displaying avatar bubbles symmetrically (me on the right, other collaborators on the left) with fallback initials and short formatted timestamps.
+  - Verified a successful production build with zero compiler warnings or TypeScript errors.
+
+- **Feature 24 — AI Presence State** ✓
+  - Connected collaborator presence `thinking` status to live cursor badges with spinning indicators.
+  - Wired `@liveblocks/react` `useMyPresence` and `useBroadcastEvent` in the `<AISidebar />` component to collaboratively toggle thinking states and broadcast room-wide status events.
+  - Successfully verified that the entire application compiles and builds flawlessly with zero TypeScript compiler errors.
+
+- **Feature 22 — Design Agent API** ✓
+  - Created `prisma/models/task-run.prisma` with `TaskRun` model: `runId` (unique), `projectId`, `userId`, `createdAt`, index on `runId`, compound index on `userId + projectId`.
+  - Ran migration `20260519121807_add_task_run` and regenerated Prisma Client.
+  - Created `trigger/design-agent.ts` exporting `designAgentTask` (id: `design-agent`): accepts `prompt` and `roomId`, logs input, returns stub — no AI logic yet.
+  - Created `POST /api/ai/design`: validates auth + project ownership via `getProjectWithAccess`, triggers `design-agent` via `tasks.trigger`, persists `TaskRun` record, returns `runId`.
+  - Created `POST /api/ai/design/token`: validates auth, looks up `TaskRun` by `runId`, checks `userId` ownership, issues a Trigger.dev public token scoped to that run via `auth.createPublicToken`.
+  - Verified `npm run build` passes with zero TypeScript errors. Both routes visible in build output.
+
+  - Installed `@trigger.dev/sdk` and `@trigger.dev/build` packages.
+  - Created `trigger.config.ts` at the project root with `maxDuration: 300` and `dirs: ["./trigger"]`.
+  - Created `trigger/` directory and `trigger/example.ts` with a Hello World smoke-test task.
+  - Added `trigger:dev` script to `package.json`.
+  - Added `TRIGGER_SECRET_KEY` placeholder to `.env.local`.
+  - Verified `npm run build` passes with zero TypeScript errors.
+  - **Remaining manual steps**: replace `YOUR_PROJECT_REF` in `trigger.config.ts` with your Trigger.dev project ref, and replace `TRIGGER_SECRET_KEY` in `.env.local` with your dev API key from the dashboard.
+
+  - Resolved selected nodes/edges deletion by changing `onKeyDown` to `onKeyDownCapture` on the canvas wrapper, bypassing React Flow's event suppression and properly invoking Liveblocks' collaborative `onDelete`.
+  - Implemented fully bidirectional four-sided connection handles on all shapes by rendering overlapping `source` and `target` handles at each position (`top`, `right`, `bottom`, `left`) while maintaining exact schema IDs for backwards-compatibility.
+  - Adjusted the canvas drag-and-drop handler to subtract half of the node's dimensions (`width / 2` and `height / 2`), ensuring dropped nodes are centered exactly under the cursor.
+  - Disabled automatic initialization zoom/fit-view on first node drop by removing the `fitView` prop from `<ReactFlow>` (retaining explicit programmatic `fitView` calls during templates imports and database load).
+  - Whitelisted `img.clerk.com` inside `next.config.ts`'s `remotePatterns` to allow error-free collaborator avatar rendering.
+  - Cleaned up the workspace navbar by conditionally rendering Clerk's `UserButton` only on the editor home screen, completely removing it from the active collaborative workspace view.
+  - Implemented Figma-style keyless multi-element selection by importing and configuring `SelectionMode.Partial`, `selectionOnDrag={canvasMode === 'pointer'}`, and `selectionKeyCode={null}` in the `<ReactFlow>` canvas. This allows drawing a selection box directly via click-and-drag in Pointer mode, and added a premium dashed cyan marquee selection box styling in `app/globals.css` matching the dark technical aesthetic.
+  - Added Pointer (Selection Tool) and Hand (Pan Tool) modes inside the elements Shape Panel, complete with standard Figma-style `MousePointer2` and `Hand` icons, dynamic grab cursor styles on the canvas wrapper, elements dragging/connecting/selection locking in Pan mode, and standard keyboard shortcut listeners (`V` for Pointer, `H` for Hand).
+  - Restored native React Flow edge selection by allowing click events to bubble up from our custom edge path (removing blocking `e.stopPropagation()` handlers). This enables React Flow's native state machine to capture the selection correctly, which automatically triggers the reconnection anchors (`.react-flow__edgeupdater`).
+  - Added a highly robust window-level event listener for Delete/Backspace keypresses, resolving elements deletion issues completely (even when clicking on custom edges or canvas nodes, which normally moves focus away from wrapper container).
+  - Enabled dynamic edge reconnection by adding `edgesReconnectable={true}` and `onReconnect={onReconnect}` from `@xyflow/react` to `<ReactFlow>`. Reconnecting edges is done by clicking and dragging the glowing cyan handle circles at the ends of selected edges.
+  - Formatted reconnection handles using proper SVG attributes (`fill`, `stroke`, `stroke-width`, `r`, and a drop-shadow glow filter) inside `app/globals.css` to make dragging handles perfectly visible and highly satisfying.
+
+- **Feature 21 — Canvas Autosave & Database Persistence** ✓
+  - Installed `@vercel/blob` npm package for secure cloud object storage.
+  - Reused the existing `canvasJsonPath: String?` schema field on the Prisma `Project` record to store the Vercel Blob URL, keeping metadata lean.
+  - Implemented `PUT /api/projects/[projectId]/canvas` which verifies Clerk authentication and collaborator access, uploads the latest canvas `{ nodes, edges }` to Vercel Blob, and updates the Prisma project record.
+  - Implemented `GET /api/projects/[projectId]/canvas` which verifies project access, retrieves the Vercel Blob URL from the database, fetches the raw canvas JSON from the blob storage, and returns it.
+  - Created a custom debounced `useCanvasAutosave` hook that watches for canvas state changes, debounces saves (to avoid excessive server writes), and broadcasts statuses.
+  - Integrated the loading/autosave framework inside `components/editor/collaborative-canvas.tsx`. On mount, if the Liveblocks room is empty, it fetches and collaboratively restores the saved state. If the room has active elements, it skips loading to protect current collaboration.
+  - Developed a premium Cloud Save status button in the `components/editor/editor-navbar.tsx` toolbar, displaying dynamic states (`Saving...`, `Saved`, `Save Error`) mapped to theme-specific HSL variables, and allowing manual force-saving immediately on click.
+
+- **Feature 20 — AI Sidebar Shell** ✓
+  - Separated the AI sidebar into a clean, dedicated `<AISidebar />` component under `components/editor/ai-sidebar.tsx`.
+  - Preserved existing slide transition animations, floating position overlay (`fixed top-14 right-0`), and shadow treatment (`shadow-2xl`).
+  - Added a premium header showing "AI Workspace", subtitle "Collaborate with Loom AI", small bot icon, and right-aligned close action.
+  - Implemented a two-tab shadcn `Tabs` layout supporting an active indigo accent theme and muted inactive states.
+  - Built the **AI Architect** panel containing a scrollable `ScrollArea` for conversations, custom Bot empty state with clickable starter prompt pills (which autofill the input area), right/left bubble styling (cyan user message bubble vs dark assistant bubble), and auto-resizing text area (min 72px, max 160px) supporting `Enter` to send.
+  - Built the **Specs** panel featuring a "Generate Spec" CTA button, a static markdown preview snippet of system architecture, and a disabled download action card.
+  - Mounted the dynamic `<AISidebar />` component inside `components/editor/editor-layout.tsx`, fully replacing the static placeholder.
+
+- **Feature 19 — Collaborative Presence, Avatars, and Live Cursors** ✓
+  - Updated Liveblocks typed Presence context to include `cursor: { x: number; y: number } | null` and `thinking: boolean`.
+  - Created a dynamic, conditional `RoomContextWrapper` in `components/editor/editor-layout.tsx` that hosts `LiveblocksProvider` and `RoomProvider` exclusively when inside active room views, keeping the home layout/navbar entirely independent of Liveblocks.
+  - Implemented `<CollaboratorAvatars />` showing up to 5 overlapping avatars inside active rooms with custom image fallback to initials and ring boundaries, and displaying a compact `+N` count.
+  - Created `<PresenceNavbarGroup />` bundling collaborators list, conditional separator line, and Clerk's standard `UserButton` scaled perfectly to `h-8 w-8`.
+  - Wired `EditorNavbar` to conditionally mount `PresenceNavbarGroup` inside the active canvas room.
+  - Created `<LiveCursor />` component displaying collaborator pointers and badges, and `<LiveCursorsLayer />` projecting flow-space coordinate positions back to constant-size screen space.
+  - Wired mouse movement trackers `onMouseMove` / `onMouseLeave` inside `CollaborativeCanvas` to project viewport coordinates to flow space and broadcast them collaboratively via presence.
+  - Successully resolved redundant Liveblocks context connections inside the main canvas wrapper component.
 
 - **Feature 18 — Starter Templates** ✓
   - Created `CanvasTemplate` interface and static `CANVAS_TEMPLATES` array in `components/editor/starter-templates.ts` supporting standard colors and shapes.
@@ -150,12 +254,14 @@ Update this file whenever the current phase, active feature, or implementation s
   - Isolated keyboard shortcut processing so standard keys are ignored while active focus is on input fields, textareas, or content-editable text areas.
   - Removed the default React Flow `<MiniMap>`.
   - Passed all TypeScript compile and build checks.
+- Resolved "RoomProvider is missing from the React tree" runtime crash by conditionally rendering `<AISidebar />` in `EditorLayout` only when `activeProjectId` is present.
 
 ## In Progress
 
 - None.
 
 ## Next Up
+
 
 - None.
 

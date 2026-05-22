@@ -1,0 +1,55 @@
+{
+  "configPath": "D:\\Tutorilas\\Next_tut\\sysarch\\.trigger\\tmp\\build-DpZ7O5\\trigger.config.mjs",
+  "customConditions": [
+  ],
+  "prompts": [
+  ],
+  "queues": [
+  ],
+  "runtime": "node",
+  "runtimeVersion": "24.7.0",
+  "tasks": [
+    {
+      "entryPoint": "D:\\Tutorilas\\Next_tut\\sysarch\\.trigger\\tmp\\build-DpZ7O5\\design-agent.mjs",
+      "filePath": "trigger/design-agent.ts",
+      "id": "design-agent",
+      "maxDuration": 3600,
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000
+      }
+    },
+    {
+      "entryPoint": "D:\\Tutorilas\\Next_tut\\sysarch\\.trigger\\tmp\\build-DpZ7O5\\example.mjs",
+      "filePath": "trigger/example.ts",
+      "id": "hello-world",
+      "maxDuration": 300,
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000
+      }
+    },
+    {
+      "entryPoint": "D:\\Tutorilas\\Next_tut\\sysarch\\.trigger\\tmp\\build-DpZ7O5\\spec-generator.mjs",
+      "filePath": "trigger/spec-generator.ts",
+      "id": "spec-generator",
+      "maxDuration": 3600,
+      "retry": {
+        "factor": 2,
+        "maxAttempts": 3,
+        "maxTimeoutInMs": 10000,
+        "minTimeoutInMs": 1000
+      }
+    }
+  ],
+  "timings": {
+    "trigger/design-agent.ts": 576.6981999999998,
+    "trigger/example.ts": 11.895199999999932,
+    "trigger/spec-generator.ts": 1149.5863
+  },
+  "workerEntryPoint": "D:\\Tutorilas\\Next_tut\\sysarch\\.trigger\\tmp\\build-DpZ7O5\\dev-run-worker.mjs"
+}

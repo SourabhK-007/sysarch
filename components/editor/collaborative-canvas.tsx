@@ -12,19 +12,25 @@ import {
   Handle,
   Position,
   NodeResizer,
-  getSmoothStepPath,
-  EdgeLabelRenderer,
-  EdgeProps,
+  useNodes,
+  useEdges,
+  SelectionMode,
+  reconnectEdge,
+  Edge,
+  Connection,
 } from '@xyflow/react';
-import { LiveblocksProvider, RoomProvider, ClientSideSuspense, useHistory } from '@liveblocks/react';
+import { ClientSideSuspense, useHistory, useMyPresence } from '@liveblocks/react';
+import { LiveCursorsLayer } from './live-cursors-layer';
 import { useLiveblocksFlow } from '@liveblocks/react-flow';
-import { Square, Diamond, Circle, Hexagon, Database, Pill, ZoomIn, ZoomOut, Maximize, Undo2, Redo2 } from 'lucide-react';
+import { Square, Diamond, Circle, Hexagon, Database, Pill, ZoomIn, ZoomOut, Maximize, Undo2, Redo2, MousePointer2, Hand } from 'lucide-react';
 import { CanvasNode, NodeShape, NODE_COLORS } from '@/types/canvas';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useEditorActions } from '@/hooks/use-editor-actions';
 import { cn } from '@/lib/utils';
 import { StarterTemplatesModal } from './starter-templates-modal';
 import { CanvasTemplate } from './starter-templates';
+import { useCanvasAutosave } from '@/hooks/use-canvas-autosave';
+import { CanvasEdge } from './canvas-edge';
 
 // React Flow v12 Core Styles
 import '@xyflow/react/dist/style.css';
@@ -218,6 +224,19 @@ export function ShapeRenderer({
   );
 }
 
+// Inline style applied to every connection Handle.
+// Inline styles beat any external stylesheet (including React Flow's own CSS),
+// so this is the only reliable way to ensure handles are fully invisible.
+const HANDLE_STYLE: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  borderRadius: 0,
+  width: 10,
+  height: 10,
+  minWidth: 0,
+  minHeight: 0,
+};
+
 // ── Custom Canvas Node Renderer ──
 export function CustomCanvasNodeRenderer({ id, data, selected }: NodeProps<CanvasNode>) {
   const { setNodes } = useReactFlow();
@@ -364,31 +383,32 @@ export function CustomCanvasNodeRenderer({ id, data, selected }: NodeProps<Canva
         onDoubleClickLabel={onDoubleClickLabel}
       />
 
-      {/* Handles at all four sides - hidden by default, shown on group/node hover */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top"
-        className="opacity-0 group-hover:opacity-100 transition-opacity !bg-white !border !border-border-default !w-2 !h-2 !-top-1 cursor-crosshair z-20"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right"
-        className="opacity-0 group-hover:opacity-100 transition-opacity !bg-white !border !border-border-default !w-2 !h-2 !-right-1 cursor-crosshair z-20"
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom"
-        className="opacity-0 group-hover:opacity-100 transition-opacity !bg-white !border !border-border-default !w-2 !h-2 !-bottom-1 cursor-crosshair z-20"
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="left"
-        className="opacity-0 group-hover:opacity-100 transition-opacity !bg-white !border !border-border-default !w-2 !h-2 !-left-1 cursor-crosshair z-20"
-      />
+      {/* Connection handles — invisible 10px hit-targets on all four sides.
+          Inline style always beats React Flow's own stylesheet — no dot rendered. */}
+
+      {/* Top */}
+      <Handle type="target" position={Position.Top} id="top"
+        style={HANDLE_STYLE} className="!-top-[5px] cursor-crosshair z-20" />
+      <Handle type="source" position={Position.Top} id="top"
+        style={HANDLE_STYLE} className="!-top-[5px] cursor-crosshair z-20" />
+
+      {/* Right */}
+      <Handle type="target" position={Position.Right} id="right"
+        style={HANDLE_STYLE} className="!-right-[5px] cursor-crosshair z-20" />
+      <Handle type="source" position={Position.Right} id="right"
+        style={HANDLE_STYLE} className="!-right-[5px] cursor-crosshair z-20" />
+
+      {/* Bottom */}
+      <Handle type="target" position={Position.Bottom} id="bottom"
+        style={HANDLE_STYLE} className="!-bottom-[5px] cursor-crosshair z-20" />
+      <Handle type="source" position={Position.Bottom} id="bottom"
+        style={HANDLE_STYLE} className="!-bottom-[5px] cursor-crosshair z-20" />
+
+      {/* Left */}
+      <Handle type="target" position={Position.Left} id="left"
+        style={HANDLE_STYLE} className="!-left-[5px] cursor-crosshair z-20" />
+      <Handle type="source" position={Position.Left} id="left"
+        style={HANDLE_STYLE} className="!-left-[5px] cursor-crosshair z-20" />
     </div>
   );
 }
@@ -398,167 +418,9 @@ const nodeTypes = {
   canvasNode: CustomCanvasNodeRenderer,
 };
 
-// ── Custom Canvas Edge Renderer ──
-export function CustomCanvasEdgeRenderer({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  markerEnd,
-  selected,
-  data,
-}: EdgeProps) {
-  const { setEdges } = useReactFlow();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedLabel, setEditedLabel] = useState((data?.label as string) || '');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Sync state with incoming collaborative data changes
-  useEffect(() => {
-    setEditedLabel((data?.label as string) || '');
-  }, [data?.label]);
-
-  // Focus the input when editing starts
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-    borderRadius: 8,
-  });
-
-  const updateLabel = (newLabel: string) => {
-    setEdges((eds) =>
-      eds.map((edge) => {
-        if (edge.id === id) {
-          return {
-            ...edge,
-            data: {
-              ...edge.data,
-              label: newLabel,
-            },
-          };
-        }
-        return edge;
-      })
-    );
-  };
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    updateLabel(editedLabel);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      setIsEditing(false);
-      updateLabel(editedLabel);
-      e.currentTarget.blur();
-    } else if (e.key === 'Escape') {
-      setEditedLabel((data?.label as string) || '');
-      setIsEditing(false);
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditing(true);
-  };
-
-  const isHighlighted = selected || isHovered;
-
-  // Render input with dynamic width based on characters
-  const inputWidth = Math.max(60, editedLabel.length * 7.5 + 20);
-
-  return (
-    <>
-      {/* Invisible thick path for easy hovering and clicking */}
-      <path
-        d={edgePath}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={15}
-        className="cursor-pointer pointer-events-auto"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onDoubleClick={handleDoubleClick}
-      />
-      
-      {/* Visible thin path */}
-      <path
-        d={edgePath}
-        fill="none"
-        stroke={isHighlighted ? 'var(--text-primary)' : 'var(--border-subtle)'}
-        strokeWidth={1.5}
-        markerEnd={markerEnd}
-        className="transition-colors duration-200 pointer-events-none"
-        style={style}
-      />
-
-      <EdgeLabelRenderer>
-        <div
-          style={{
-            position: 'absolute',
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-            pointerEvents: 'all',
-          }}
-          className="nodrag nopan z-30 flex items-center justify-center"
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type="text"
-              value={editedLabel}
-              onChange={(e) => setEditedLabel(e.target.value)}
-              onBlur={handleBlur}
-              onKeyDown={handleKeyDown}
-              className="px-2 py-0.5 text-[11px] font-medium text-center text-text-primary bg-bg-elevated border border-accent-primary rounded-md outline-none shadow-lg"
-              style={{ width: `${inputWidth}px` }}
-            />
-          ) : data?.label ? (
-            <div
-              onDoubleClick={handleDoubleClick}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="px-2.5 py-0.5 rounded-full border border-border-subtle bg-bg-surface/90 text-[11px] font-medium text-text-secondary shadow-md backdrop-blur-sm select-none cursor-text hover:text-text-primary hover:border-border-default transition-all duration-200"
-            >
-              {data.label as string}
-            </div>
-          ) : isHighlighted ? (
-            <div
-              onDoubleClick={handleDoubleClick}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="px-2.5 py-0.5 rounded-full border border-dashed border-border-subtle/50 bg-bg-surface/50 text-[10px] italic font-normal text-text-muted/60 shadow-sm backdrop-blur-sm select-none cursor-pointer hover:text-text-muted hover:border-border-subtle transition-all duration-200"
-            >
-              Double-click to label
-            </div>
-          ) : null}
-        </div>
-      </EdgeLabelRenderer>
-    </>
-  );
-}
-
 // Custom Edge Types Registry for React Flow
 const edgeTypes = {
-  canvasEdge: CustomCanvasEdgeRenderer,
+  canvasEdge: CanvasEdge,
 };
 
 // ── Draggable Shape Panel ──
@@ -579,7 +441,12 @@ const SHAPES: ShapeItem[] = [
   { shape: 'hexagon', label: 'External', icon: Hexagon, width: 100, height: 100 },
 ];
 
-function ShapePanel() {
+interface ShapePanelProps {
+  canvasMode: 'pointer' | 'hand';
+  onChangeCanvasMode: (mode: 'pointer' | 'hand') => void;
+}
+
+function ShapePanel({ canvasMode, onChangeCanvasMode }: ShapePanelProps) {
   const onDragStart = (event: React.DragEvent, shape: NodeShape, width: number, height: number) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify({ shape, width, height }));
     event.dataTransfer.effectAllowed = 'move';
@@ -629,18 +496,97 @@ function ShapePanel() {
             </div>
           );
         })}
+
+        {/* Vertical Divider */}
+        <div className="w-[1px] h-6 bg-border-subtle mx-1" />
+
+        {/* Pointer/Selection Tool */}
+        <button
+          onClick={() => onChangeCanvasMode('pointer')}
+          className={cn(
+            "group flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all select-none relative cursor-pointer border border-transparent",
+            canvasMode === 'pointer' 
+              ? "text-accent-primary bg-accent-primary-dim border border-accent-primary/20" 
+              : "text-text-muted hover:text-text-primary hover:bg-bg-subtle"
+          )}
+          title="Selection Tool (V)"
+        >
+          <MousePointer2 className="w-5 h-5 transition-transform group-hover:scale-110" />
+          <span className="absolute -top-10 px-2 py-1 rounded bg-bg-surface border border-border-default text-[10px] text-text-primary opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-50">
+            Selection Tool (V)
+          </span>
+        </button>
+
+        {/* Hand/Pan Tool */}
+        <button
+          onClick={() => onChangeCanvasMode('hand')}
+          className={cn(
+            "group flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all select-none relative cursor-pointer border border-transparent",
+            canvasMode === 'hand' 
+              ? "text-accent-primary bg-accent-primary-dim border border-accent-primary/20" 
+              : "text-text-muted hover:text-text-primary hover:bg-bg-subtle"
+          )}
+          title="Pan Tool (H)"
+        >
+          <Hand className="w-5 h-5 transition-transform group-hover:scale-110" />
+          <span className="absolute -top-10 px-2 py-1 rounded bg-bg-surface border border-border-default text-[10px] text-text-primary opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-md whitespace-nowrap z-50">
+            Pan Tool (H)
+          </span>
+        </button>
       </div>
     </>
   );
 }
 
 // ── Inner Collaborative Canvas Component ──
-function CollaborativeCanvas() {
+interface CollaborativeCanvasProps {
+  roomId: string;
+}
+
+/**
+ * Strips the stale '-src' suffix from sourceHandle / targetHandle values.
+ * This suffix was briefly introduced and then reverted; any edges persisted
+ * during that window (in Vercel Blob or in the Liveblocks room) need to be
+ * normalised before React Flow can match them to the correct handles.
+ */
+function normalizeEdgeHandles(edges: Edge[]): Edge[] {
+  return edges.map((edge) => ({
+    ...edge,
+    sourceHandle: edge.sourceHandle?.replace(/-src$/, '') ?? edge.sourceHandle,
+    targetHandle: edge.targetHandle?.replace(/-src$/, '') ?? edge.targetHandle,
+  }));
+}
+
+function CollaborativeCanvas({ roomId }: CollaborativeCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const { screenToFlowPosition, setNodes, setEdges } = reactFlowInstance;
+  const { lastSavedJsonRef } = useCanvasAutosave(roomId);
+  const currentNodes = useNodes();
+  const currentEdges = useEdges();
+
+  const [canvasMode, setCanvasMode] = useState<'pointer' | 'hand'>('pointer');
 
   const { undo, redo, canUndo, canRedo } = useHistory();
+  const [, updateMyPresence] = useMyPresence();
+
+  // Convert screen coordinates to flow-space coordinates and broadcast via presence
+  const onMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const screenPosition = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+      const flowPosition = screenToFlowPosition(screenPosition);
+      updateMyPresence({ cursor: flowPosition });
+    },
+    [screenToFlowPosition, updateMyPresence]
+  );
+
+  const onMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null });
+  }, [updateMyPresence]);
+
   const editorActions = useEditorActions();
   const isSidebarOpen = editorActions?.isSidebarOpen ?? false;
 
@@ -678,13 +624,12 @@ function CollaborativeCanvas() {
   // Wire the keyboard shortcuts
   useKeyboardShortcuts({ reactFlowInstance, undo, redo });
 
-  // Sync nodes, edges, and change handlers with Liveblocks Room State
   const {
     nodes,
     edges,
     onNodesChange,
     onEdgesChange,
-    onConnect,
+    onConnect: liveblocksOnConnect,
     onDelete,
   } = useLiveblocksFlow({
     suspense: true,
@@ -696,10 +641,173 @@ function CollaborativeCanvas() {
     },
   });
 
+  // Guard onConnect: during a reconnect drag React Flow fires onConnect on
+  // handle drop IN ADDITION TO onReconnect, producing a duplicate edge.
+  // `isReconnecting` is true only for the duration of a reconnect drag.
+  // Any onConnect that arrives while `isReconnecting` is a reconnect
+  // side-effect — suppress it. All other onConnect calls are real new
+  // connections and must always be forwarded.
+  const isReconnecting = useRef(false);
+  // Tracks whether onReconnect() ran (i.e. drop landed on a valid handle)
+  const reconnectCompleted = useRef(false);
+
+  const onConnect = useCallback(
+    (connection: Parameters<typeof liveblocksOnConnect>[0]) => {
+      if (isReconnecting.current) return; // suppress duplicate during reconnect
+      liveblocksOnConnect(connection);
+    },
+    [liveblocksOnConnect]
+  );
+
+  // Handle global keyboard shortcuts (Delete/Backspace to delete elements, V/H to toggle tools)
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        const selectedNodes = currentNodes.filter((node) => node.selected);
+        const selectedEdges = currentEdges.filter((edge) => edge.selected);
+
+        if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
+
+        event.preventDefault();
+        onDelete({ nodes: selectedNodes as any, edges: selectedEdges as any });
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'v') {
+        setCanvasMode('pointer');
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'h') {
+        setCanvasMode('hand');
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [currentNodes, currentEdges, onDelete, setCanvasMode]);
+
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+
+  // Load saved canvas state from database on mount if the collaborative room is empty
+  useEffect(() => {
+    if (hasAttemptedLoad || !roomId) return;
+
+    const loadSavedCanvas = async () => {
+      // If the room already has active nodes or edges, skip loading to avoid overwriting collaboration
+      if (nodes.length > 0 || edges.length > 0) {
+        setHasAttemptedLoad(true);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/projects/${roomId}/canvas`);
+        if (!res.ok) {
+          setHasAttemptedLoad(true);
+          return;
+        }
+        const data = await res.json();
+        if (data && (data.nodes?.length > 0 || data.edges?.length > 0)) {
+          // Normalise any stale '-src' handle ids before populating the room
+          const cleanEdges = normalizeEdgeHandles(data.edges ?? []);
+
+          // Collaboratively populate the canvas
+          setNodes(data.nodes);
+          setEdges(cleanEdges);
+
+          // Prime the autosave ref with loaded data to prevent immediate redundant autosave
+          lastSavedJsonRef.current = JSON.stringify({
+            nodes: data.nodes,
+            edges: cleanEdges,
+          });
+
+          // Fit view after nodes are rendered
+          setTimeout(() => {
+            reactFlowInstance.fitView({ padding: 0.2, duration: 400 });
+          }, 50);
+        }
+      } catch (err) {
+        console.error('[COLLABORATIVE_CANVAS] Failed to load saved canvas:', err);
+      } finally {
+        setHasAttemptedLoad(true);
+      }
+    };
+
+    loadSavedCanvas();
+  }, [roomId, nodes, edges, setNodes, setEdges, reactFlowInstance, hasAttemptedLoad, lastSavedJsonRef]);
+
+  // One-shot migration: fix any stale '-src' handle IDs already sitting in the
+  // Liveblocks room (written during the brief window those IDs existed).
+  const hasMigratedHandles = useRef(false);
+  useEffect(() => {
+    if (hasMigratedHandles.current || edges.length === 0) return;
+    const allEdges = edges as Edge[];
+    const stale = allEdges.filter(
+      (e) => e.sourceHandle?.endsWith('-src') || e.targetHandle?.endsWith('-src')
+    );
+    if (stale.length === 0) {
+      hasMigratedHandles.current = true;
+      return;
+    }
+    console.info(`[CANVAS] Migrating ${stale.length} stale edge handle(s)`);
+    const fixed = normalizeEdgeHandles(stale);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onEdgesChange(fixed.map((e) => ({ type: 'replace', id: e.id, item: e } as any)));
+    hasMigratedHandles.current = true;
+  }, [edges, onEdgesChange]);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
+
+  const onReconnectStart = useCallback(() => {
+    // Mark that a reconnect drag is in flight so onConnect suppresses its
+    // duplicate call for the duration of this drag.
+    isReconnecting.current = true;
+    reconnectCompleted.current = false;
+  }, []);
+
+  // onReconnect fires only when dropped on a valid handle.
+  // `replace` calls reconcile() on the existing LiveMap entry in Liveblocks,
+  // updating source/target/handles in-place — no new edge ID is created.
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
+      reconnectCompleted.current = true;
+      const updatedEdge = reconnectEdge(oldEdge, newConnection, [oldEdge])[0] as Edge | undefined;
+      if (!updatedEdge) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onEdgesChange([{ type: 'replace', id: oldEdge.id, item: updatedEdge } as any]);
+    },
+    [onEdgesChange]
+  );
+
+  // Clear the reconnect flag. If onReconnect never ran (dropped on empty space),
+  // delete the dangling edge collaboratively.
+  // Signature: (event, edge, handleType, connectionState) per @xyflow/react v12.
+  const onReconnectEnd = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_evt: MouseEvent | TouchEvent, edge: Edge, _handleType: unknown, _cs: unknown) => {
+      isReconnecting.current = false;
+      if (!reconnectCompleted.current) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (onDelete as any)({ nodes: [], edges: [edge] });
+      }
+    },
+    [onDelete]
+  );
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -719,7 +827,14 @@ function CollaborativeCanvas() {
           y: event.clientY,
         };
 
-        const position = screenToFlowPosition(screenPosition);
+        // Convert the cursor screen position to flow space coordinates
+        const flowPosition = screenToFlowPosition(screenPosition);
+        
+        // Offset the top-left coordinate so the center of the node aligns exactly with the cursor
+        const position = {
+          x: flowPosition.x - width / 2,
+          y: flowPosition.y - height / 2,
+        };
 
         const timestamp = Date.now();
         const currentCounter = ++nodeCounter;
@@ -754,31 +869,72 @@ function CollaborativeCanvas() {
       ref={reactFlowWrapper}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      className="relative h-full w-full bg-bg-base"
+      className={cn(
+        "w-full h-full relative select-none bg-[#09090b]",
+        canvasMode === 'hand' && "cursor-grab [&_.react-flow__pane]:cursor-grab [&_.react-flow__node]:!cursor-grab [&_.react-flow__edge]:!cursor-grab [&_.react-flow__pane]:active:cursor-grabbing [&_.react-flow__node]:active:!cursor-grabbing"
+      )}
+      tabIndex={0}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
     >
+      {/* Custom SVG markers for dynamic arrow highlighting */}
+      <svg style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }} aria-hidden="true">
+        <defs>
+          <marker
+            id="arrow-inactive"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="8"
+            markerHeight="8"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--border-subtle)" />
+          </marker>
+          <marker
+            id="arrow-active"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="8"
+            markerHeight="8"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--text-primary)" />
+          </marker>
+        </defs>
+      </svg>
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnect={onReconnect}
+        onReconnectStart={onReconnectStart}
+        onReconnectEnd={onReconnectEnd}
         onDelete={onDelete}
+        deleteKeyCode={null}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionMode={ConnectionMode.Loose}
-        fitView
-        // Default edge options tuned for premium aesthetic (ui-context.md)
+        selectionOnDrag={canvasMode === 'pointer'}
+        selectionKeyCode={null}
+        selectionMode={SelectionMode.Partial}
+        nodesDraggable={canvasMode === 'pointer'}
+        nodesConnectable={canvasMode === 'pointer'}
+        elementsSelectable={canvasMode === 'pointer'}
+        panOnDrag={canvasMode === 'hand'}
+        edgesReconnectable={true}
+        // Default edge options — arrows are rendered by the custom SVG marker
+        // defined in the canvas. Do NOT set markerEnd here; the custom edge
+        // renderer references url(#arrow-inactive / #arrow-active) directly.
         defaultEdgeOptions={{
           type: 'canvasEdge',
           style: {
             stroke: 'var(--border-subtle)',
             strokeWidth: 1.5,
-          },
-          markerEnd: {
-            type: 'arrow',
-            color: 'var(--border-subtle)',
-            width: 20,
-            height: 20,
           },
         }}
       >
@@ -792,8 +948,11 @@ function CollaborativeCanvas() {
         
       </ReactFlow>
 
+      {/* Floating Live Cursors Layer */}
+      <LiveCursorsLayer />
+
       {/* Floating Shape Panel */}
-      <ShapePanel />
+      <ShapePanel canvasMode={canvasMode} onChangeCanvasMode={setCanvasMode} />
 
       {/* Floating Control Bar */}
       <div 
@@ -920,35 +1079,25 @@ export function CollaborativeCanvasWrapper({ roomId }: CollaborativeCanvasWrappe
         </div>
       }
     >
-      <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
-        <RoomProvider
-          id={roomId}
-          initialPresence={{
-            cursor: null,
-            isThinking: false,
-          }}
-        >
-          <ClientSideSuspense
-            fallback={
-              <div className="flex h-full w-full flex-col items-center justify-center bg-bg-base p-6 text-center">
-                <div className="relative mb-4 flex h-14 w-14 items-center justify-center">
-                  {/* Premium spinning outer ring */}
-                  <div className="absolute inset-0 rounded-full border-4 border-accent-primary/20" />
-                  <div className="absolute inset-0 rounded-full border-4 border-accent-primary border-t-transparent animate-spin" />
-                  <span className="text-xs font-bold text-accent-primary">LB</span>
-                </div>
-                <p className="text-sm font-medium text-text-secondary tracking-wide animate-pulse">
-                  Establishing secure collaborative workspace connection...
-                </p>
-              </div>
-            }
-          >
-            <ReactFlowProvider>
-              <CollaborativeCanvas />
-            </ReactFlowProvider>
-          </ClientSideSuspense>
-        </RoomProvider>
-      </LiveblocksProvider>
+      <ClientSideSuspense
+        fallback={
+          <div className="flex h-full w-full flex-col items-center justify-center bg-bg-base p-6 text-center">
+            <div className="relative mb-4 flex h-14 w-14 items-center justify-center">
+              {/* Premium spinning outer ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-accent-primary/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-accent-primary border-t-transparent animate-spin" />
+              <span className="text-xs font-bold text-accent-primary">LB</span>
+            </div>
+            <p className="text-sm font-medium text-text-secondary tracking-wide animate-pulse">
+              Establishing secure collaborative workspace connection...
+            </p>
+          </div>
+        }
+      >
+        <ReactFlowProvider>
+          <CollaborativeCanvas roomId={roomId} />
+        </ReactFlowProvider>
+      </ClientSideSuspense>
     </CanvasErrorBoundary>
   );
 }
