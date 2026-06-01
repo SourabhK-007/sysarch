@@ -9,9 +9,10 @@ import type { useProjectActions } from '@/hooks/use-project-actions';
 interface ProjectDialogsProps {
   actions: ReturnType<typeof useProjectActions>;
   isOwner?: boolean;
+  activeProjectId?: string;
 }
 
-export function ProjectDialogs({ actions, isOwner = false }: ProjectDialogsProps) {
+export function ProjectDialogs({ actions, isOwner = false, activeProjectId }: ProjectDialogsProps) {
   const {
     // Create
     isCreateOpen, createName, setCreateName, roomId, isCreating, closeCreate, submitCreate,
@@ -121,7 +122,7 @@ export function ProjectDialogs({ actions, isOwner = false }: ProjectDialogsProps
             <Button
               type="button"
               variant="destructive"
-              onClick={() => submitDelete()}
+              onClick={() => submitDelete(activeProjectId)}
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting…' : 'Delete Project'}

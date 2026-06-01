@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../trigger/example.ts"],
+  "sourcesContent": ["import { logger, task, wait } from \"@trigger.dev/sdk\";\r\n\r\n/**\r\n * Hello World — smoke-test task to verify Trigger.dev is wired up correctly.\r\n * Test this from the Trigger.dev dashboard → Test tab.\r\n * Delete or replace with real tasks once connection is confirmed.\r\n */\r\nexport const helloWorldTask = task({\r\n  id: \"hello-world\",\r\n  // Optional: limit how long this task can run\r\n  maxDuration: 300, // 5 minutes\r\n\r\n  run: async (payload: { message?: string }, { ctx }) => {\r\n    const message = payload.message ?? \"Hello from Loom AI!\";\r\n\r\n    logger.log(\"Task started\", { message, runId: ctx.run.id });\r\n\r\n    // Simulate a short async operation\r\n    await wait.for({ seconds: 2 });\r\n\r\n    logger.log(\"Task complete\", { message });\r\n\r\n    return { message, success: true };\r\n  },\r\n});\r\n"],
+  "mappings": ";;;;;;;;;;;;AAAA;AAOO,IAAM,iBAAiB,KAAK;AAAA,EACjC,IAAI;AAAA;AAAA,EAEJ,aAAa;AAAA;AAAA,EAEb,KAAK,8BAAO,SAA+B,EAAE,IAAI,MAAM;AACrD,UAAM,UAAU,QAAQ,WAAW;AAEnC,WAAO,IAAI,gBAAgB,EAAE,SAAS,OAAO,IAAI,IAAI,GAAG,CAAC;AAGzD,UAAM,KAAK,IAAI,EAAE,SAAS,EAAE,CAAC;AAE7B,WAAO,IAAI,iBAAiB,EAAE,QAAQ,CAAC;AAEvC,WAAO,EAAE,SAAS,SAAS,KAAK;AAAA,EAClC,GAXK;AAYP,CAAC;",
+  "names": []
+}

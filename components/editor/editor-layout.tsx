@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { EditorNavbar } from '@/components/editor/editor-navbar';
 import { ProjectSidebar } from '@/components/editor/project-sidebar';
@@ -40,13 +40,34 @@ function RoomContextWrapper({ roomId, children }: { roomId?: string; children: R
 
 export function EditorLayout({ 
   children, 
-  ownedProjects, 
-  sharedProjects,
+  ownedProjects: initialOwned,
+  sharedProjects: initialShared,
 }: EditorLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const actions = useProjectActions();
   const pathname = usePathname();
+
+  // Client-side project lists — seeded from server props, kept fresh via API
+  const [ownedProjects, setOwnedProjects] = useState<ProjectSummary[]>(initialOwned);
+  const [sharedProjects, setSharedProjects] = useState<ProjectSummary[]>(initialShared);
+
+  // Re-fetch project lists whenever the pathname changes (e.g. after project creation)
+  const refreshProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/projects');
+      if (res.ok) {
+        const json = await res.json() as { data: ProjectSummary[] };
+        setOwnedProjects(json.data);
+      }
+    } catch {
+      // silently keep existing list on network error
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshProjects();
+  }, [pathname, refreshProjects]);
 
   // Detect active project from URL: /editor/[roomId]
   const activeProjectId = useMemo(() => {
@@ -57,7 +78,7 @@ export function EditorLayout({
     return undefined;
   }, [pathname]);
 
-  // Find active project name
+  // Find active project name from the live client-side list
   const activeProject = useMemo(() => {
     if (!activeProjectId) return null;
     return (
@@ -122,7 +143,7 @@ export function EditorLayout({
           </div>
         </div>
       </RoomContextWrapper>
-      <ProjectDialogs actions={actions} isOwner={isOwner} />
+      <ProjectDialogs actions={actions} isOwner={isOwner} activeProjectId={activeProjectId} />
     </EditorActionsContext.Provider>
   );
 }

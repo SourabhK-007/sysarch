@@ -75,6 +75,7 @@ export function useProjectActions() {
       if (!res.ok) throw new Error('Failed to create project');
       const json = await res.json() as { data: ProjectSummary };
       closeCreate();
+      router.refresh();
       router.push(`/editor/${json.data.id}`);
     } catch (err) {
       console.error('[useProjectActions] create:', err);
@@ -131,7 +132,10 @@ export function useProjectActions() {
       const res = await fetch(`/api/projects/${deleteTarget.id}`, {
         method: 'DELETE',
       });
-      if (!res.ok) throw new Error('Failed to delete project');
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Failed to delete project: ${res.status} ${text}`);
+      }
       closeDelete();
       if (activeProjectId === deleteTarget.id) {
         router.push('/editor');
@@ -145,20 +149,20 @@ export function useProjectActions() {
     }
   }, [deleteTarget, closeDelete, router]);
 
-    // Share dialog state
-    const [isShareOpen, setIsShareOpen] = useState(false);
-    const [shareProjectId, setShareProjectId] = useState<string | null>(null);
+  // Share dialog state
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareProjectId, setShareProjectId] = useState<string | null>(null);
 
-    // --- Share ---
-    const openShare = useCallback((projectId: string) => {
-      setShareProjectId(projectId);
-      setIsShareOpen(true);
-    }, []);
+  // --- Share ---
+  const openShare = useCallback((projectId: string) => {
+    setShareProjectId(projectId);
+    setIsShareOpen(true);
+  }, []);
 
-    const closeShare = useCallback(() => {
-      setIsShareOpen(false);
-      setShareProjectId(null);
-    }, []);
+  const closeShare = useCallback(() => {
+    setIsShareOpen(false);
+    setShareProjectId(null);
+  }, []);
 
   return {
     // Create
